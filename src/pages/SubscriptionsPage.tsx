@@ -129,7 +129,7 @@ export function SubscriptionsPage() {
     }
 
     try {
-      await createSubscription({
+      const result = await createSubscription({
         schoolId: selectedSchool,
         planId: selectedPlan,
         startDate: startDate || undefined,
@@ -149,8 +149,13 @@ export function SubscriptionsPage() {
           : undefined,
       }).unwrap();
 
+      const accessEmail = result?.schoolAccessEmail ? ` ${result.schoolAccessEmail}` : "";
+      const portal = result?.portalUrl ? ` Sign in at ${result.portalUrl}.` : "";
+      const password = result?.temporaryPassword ? ` Temporary password: ${result.temporaryPassword}` : "";
       alert(
-        "Subscription sent to school. Email should be delivered by backend."
+        result?.emailSent
+          ? `Subscription sent. School access details were emailed to${accessEmail}.${portal}${password}`
+          : `Subscription saved, but the email could not be sent. School access email:${accessEmail}.${portal}${password}`
       );
 
       setShowSendForm(false);
@@ -159,7 +164,8 @@ export function SubscriptionsPage() {
       void refetchSubscriptions();
     } catch (err) {
       console.error(err);
-      alert("Failed to send subscription. See console for details.");
+      const data = (err as { data?: { message?: string } })?.data;
+      alert(data?.message || "Failed to send subscription. See console for details.");
     }
   }
 
